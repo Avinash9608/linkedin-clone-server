@@ -32,17 +32,24 @@ app.use("/api/v1/auth", auth);
 app.use("/api/v1/users", users);
 app.use("/api/v1/posts", posts);
 
-// Root route
+// Root route with environment info for debugging
 app.get('/', (req, res) => {
   res.json({
     message: 'LinkedIn Clone API',
     status: 'Running',
+    environment: process.env.NODE_ENV,
+    vercel: process.env.VERCEL ? true : false,
     endpoints: [
       '/api/v1/auth',
       '/api/v1/users',
       '/api/v1/posts'
     ]
   });
+});
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
 });
 
 // ===== Serve static files from React frontend in production =====
@@ -59,10 +66,26 @@ if (process.env.NODE_ENV === "production" && !process.env.VERCEL) {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  // Log error details for debugging
+  console.error('Error details:');
+  console.error(`- Message: ${err.message}`);
+  console.error(`- Name: ${err.name}`);
+  console.error(`- Code: ${err.code}`);
+  console.error(`- Stack: ${err.stack}`);
 
   let error = { ...err };
   error.message = err.message;
+
+  // Mongoose connection errors
+  if (err.name === 'MongooseServerSelectionError' || 
+      err.name === 'MongooseError' || 
+      err.name === 'MongoError') {
+    console.error('Database connection error detected');
+    return res.status(500).json({
+      success: false,
+      error: 'Database connection error. Please try again later.',
+    });
+  }
 
   // Mongoose duplicate key
   if (err.code === 11000) {
@@ -99,10 +122,26 @@ app.use((err, req, res, next) => {
     });
   }
 
-  res.status(error.statusCode || 500).json({
+  // Default error response
+  const statusCode = error.statusCode || 500;
+  const errorMessage = error.message || "Server Error";
+  
+  // Add environment info in development
+  const responseData = {
     success: false,
-    error: error.message || "Server Error",
-  });
+    error: errorMessage,
+  };
+  
+  // Add debug info in development
+  if (process.env.NODE_ENV === 'development') {
+    responseData.debug = {
+      name: err.name,
+      code: err.code,
+      stack: err.stack,
+    };
+  }
+  
+  res.status(statusCode).json(responseData);
 });
 
 module.exports = app;
