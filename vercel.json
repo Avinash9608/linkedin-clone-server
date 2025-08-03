@@ -17,10 +17,6 @@
     }
   ],
   "env": {
-    "NODE_ENV": "production",
-    "MONGO_URI": "mongodb+srv://avinashmadhukar4:aMnPjXMNImptNmF7@cluster0.wxpkj6c.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
-    "JWT_SECRET": "dG8sY2FuSSUo*22dk@fj9s8",
-    "JWT_EXPIRE": "30d",
-    "JWT_COOKIE_EXPIRE": "30"
+    "NODE_ENV": "production"
   }
 }
