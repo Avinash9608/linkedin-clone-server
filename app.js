@@ -22,15 +22,33 @@ if (process.env.NODE_ENV === "development") {
 }
 
 // Enable CORS
-app.use(cors());
+app.use(cors({
+  origin: ['https://linkedin-clone-client.vercel.app', 'http://localhost:3000'],
+  credentials: true
+}));
 
 // Mount routers
 app.use("/api/v1/auth", auth);
 app.use("/api/v1/users", users);
 app.use("/api/v1/posts", posts);
 
+// Root route
+app.get('/', (req, res) => {
+  res.json({
+    message: 'LinkedIn Clone API',
+    status: 'Running',
+    endpoints: [
+      '/api/v1/auth',
+      '/api/v1/users',
+      '/api/v1/posts'
+    ]
+  });
+});
+
 // ===== Serve static files from React frontend in production =====
-if (process.env.NODE_ENV === "production") {
+// Note: On Vercel, we don't need to serve static files as the frontend is deployed separately
+// This code is kept for local development and other deployment environments
+if (process.env.NODE_ENV === "production" && !process.env.VERCEL) {
   app.use(express.static(path.join(__dirname, "../client/build")));
 
   app.get("*", (req, res) => {
